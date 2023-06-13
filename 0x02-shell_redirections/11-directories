@@ -1,2 +1,2 @@
 #!/bin/bash
-shopt -s dotglob; echo $(($(find * -type d | wc -l) - 2))
+find . -type d -not -name | wc -l
