@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#Display Best school 10 times but on 9 iteration say Hi
+
+x=0
+while [ $x -lt 10 ]
+do
+	if [ $x -eq 8 ]
+	then
+		echo "Best School"
+		echo "Hi"
+	else
+		echo "Best School"
+	fi
+
+	((x++))
+done
