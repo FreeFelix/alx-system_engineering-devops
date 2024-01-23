@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Configures a new Ubuntu machine by installing Nginx,
+# configuring it to listen on port 80, and serving a simple "Hello World" page.
+
+# Update package list and install Nginx
+echo -e "Updating and installing Nginx.\n"
+sudo apt-get update -y -qq && \
+sudo apt-get install nginx -y
+
+echo -e "\nSetting up some minor stuff.\n"
+
+# Start the Nginx service
+sudo service nginx start
+
+# Allow Nginx through the firewall
+sudo ufw allow 'Nginx HTTP'
+
+# Give the user ownership of website files for easy editing
+sudo chown -R "$USER":"$USER" /var/www/html
+sudo chmod -R 755 /var/www
+
+# Backup the default Nginx index file
+cp /var/www/html/index.nginx-debian.html /var/www/html/index.nginx-debian.html.bckp
+
+# Create a new index file with a "Hello World!" message
+echo -e "Hello World!" > /var/www/html/index.nginx-debian.html
+
+# Set up a redirection rule to a YouTube video for /redirect_me
+sudo sed -i '24i\       rewrite ^/redirect_me https://www.youtube.com/watch?v=QH2-TGUlwu4 permanent;' /etc/nginx/sites-available/default
+
+# Restart Nginx to apply the changes
+sudo service nginx restart
+
+# Display completion message
+echo -e "\nCompleted.\n"
