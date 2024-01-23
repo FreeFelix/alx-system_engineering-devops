@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Start Apache to serve a page containing "Hello Holberton"
+echo -e "Starting Apache to serve a page containing Hello Holberton.\n"
+
+# Start the Apache service
+service apache2 start
+
+# Display a completion message
+echo -e "Apache started. ✅\n"
