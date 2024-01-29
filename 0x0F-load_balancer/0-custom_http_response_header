@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Configuration script for setting up Nginx on a new Ubuntu machine
+
+# Configuration file paths
+NGINX_CONFIG_FILE="/etc/nginx/sites-available/default"
+CUSTOM_ERROR_PAGE="/usr/share/nginx/html/404error.html"
+
+# Nginx configurations
+REDIRECT_CONFIG=$'\n\tlocation /redirect_me {\n\t\treturn 301 https://youtu.be/dQw4w9WgXcQ;\n\t}\n'
+ERROR_PAGE_CONFIG=$'\n\terror_page 404 /404error.html;\n\tlocation = /404error.html {\n\t\troot /usr/share/nginx/html;\n\t\tinternal;\n\t}\n'
+CUSTOM_HEADER_CONFIG=$'\n\tadd_header X-Served-By $hostname;\n'
+
+# Content for default web page and custom error page
+DEFAULT_PAGE_CONTENT="Hello World!"
+ERROR_PAGE_CONTENT="Ceci n'est pas une page"
+
+# Update package list and install Nginx
+apt-get -y update
+apt-get -y install nginx
+
+# Allow incoming traffic on the Nginx HTTP port
+ufw allow 'Nginx HTTP'
+
+# Create and configure default web page
+echo "$DEFAULT_PAGE_CONTENT" > /var/www/html/index.nginx-debian.html
+sed -i "37i$REDIRECT_CONFIG" "$NGINX_CONFIG_FILE"
+
+# Create and configure custom error page
+echo "$ERROR_PAGE_CONTENT" > "$CUSTOM_ERROR_PAGE"
+sed -i "37i$ERROR_PAGE_CONFIG" "$NGINX_CONFIG_FILE"
+
+# Add custom header to Nginx configuration
+sed -i "37i$CUSTOM_HEADER_CONFIG" "$NGINX_CONFIG_FILE"
+
+# Restart Nginx service to apply changes
+service nginx restart
