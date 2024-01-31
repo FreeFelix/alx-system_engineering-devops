@@ -1,14 +1,20 @@
-# Creates a custom HTTP header response
-exec { 'command':
-  command   => 'apt-get -y update;
-# Update package list
-                apt-get -y install nginx;
-# Install nginx
-                sudo sed -i "/listen 80 default_server;/a add_header X-Served-By $HOSTNAME;" /etc/nginx/sites-available/default;
-# Add custom header to nginx configuration
-                service nginx restart',
-# Restart nginx service
-  provider  => 'shell',
-# Specify shell provider for execution
+# Use Puppet to automate the task of creating a custom HTTP header response
+
+# Execute 'apt-get update' before installing nginx
+exec {'update':
+  command => '/usr/bin/apt-get update',
 }
-i
+# Ensure nginx is present
+-> package {'nginx':
+  ensure => 'present',
+}
+# Add a custom HTTP header in the nginx configuration
+-> file_line { 'http_header':
+  path  => '/etc/nginx/nginx.conf',
+  match => 'http {',
+  line  => "http {\n\tadd_header X-Served-By \"${hostname}\";",
+}
+# Restart nginx after updating the configuration
+-> exec {'run':
+  command => '/usr/sbin/service nginx restart',
+}
