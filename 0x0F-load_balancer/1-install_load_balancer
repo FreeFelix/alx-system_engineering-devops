@@ -1,56 +1,56 @@
 #!/usr/bin/env bash
-# Installs HAProxy version 1.8 with specific configurations:
-# - Enables management via the init script.
-# - Distributes requests using a round-robin algorithm.
+# install load balancer
 
-# Install software-properties-common for managing software repositories
-apt-get install -y software-properties-common
+echo -e "Updating and doing some minor checks...\n"
 
-# Add HAProxy 1.8 repository and update package list
-add-apt-repository -y ppa:vbernat/haproxy-1.8
-apt-get update
+function install() {
+    command -v "$1" &> /dev/null
 
-# Install HAProxy version 1.8
-apt-get install -y haproxy=1.8.*
+    # shellcheck disable=SC2181
+    if [ $? -ne 0 ]; then
+        echo -e "    Installing: $1\n"
+        sudo apt-get update -y -qq && \
+            sudo apt-get install -y "$1" -qq
+        echo -e "\n"
+    else
+        echo -e "    ${1} is already installed.\n"
+    fi
+}
 
-# Enable HAProxy management via the init script
-echo "ENABLED=1" >> /etc/default/haproxy
+# Install haproxy
+install haproxy
 
-# Backup the original HAProxy configuration file
-mv /etc/haproxy/haproxy.cfg{,.original}
+echo -e "\nSetting up some minor stuff.\n"
 
-# Create an empty HAProxy configuration file
-touch /etc/haproxy/haproxy.cfg
+# Backup the default haproxy configuration file
+sudo cp /etc/haproxy/haproxy.cfg haproxy_default.backup
 
-# Configure HAProxy with specific settings
-printf %s "global
-    log 127.0.0.1 local0 notice
-    maxconn 2000
-    user haproxy
-    group haproxy
-
+# Define haproxy server configuration
+haproxy_config="
 defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    retries 3
-    option redispatch
-    timeout connect  5000
-    timeout client  10000
-    timeout server  10000
-
-listen hbnb
-    bind 0.0.0.0:80
-    mode http
-    stats enable
-    stats uri /haproxy?stats
+  mode http
+  timeout client 15s
+  timeout connect 10s
+  timeout server 15s
+  timeout http-request 10s
+frontend clickviral-tech-frontend
+    bind *:80
+    default_backend clickviral-tech-backend
+backend clickviral-tech-backend
     balance roundrobin
-    option httpclose
-    option forwardfor
-    server 436533-web-01 54.227.199.4 check
-    server 436533-web-02 100.25.203.163 check
-" >> /etc/haproxy/haproxy.cfg
+    server 436533-web-01 54.227.199.4:80 check
+    server 436533-web-02 100.25.203.163:80 check
+"
 
-# Start the HAProxy service
-service haproxy start
+# shellcheck disable=SC2154
+echo "$haproxy_config" | sudo dd status=none of=/etc/haproxy/haproxy.cfg
+
+# Enable haproxy to be started by the init script
+echo "ENABLED=1" | sudo dd status=none of=/etc/default/haproxy
+
+# Check if haproxy is running and start/restart accordingly
+if [ "$(pgrep -c haproxy)" -le 0 ]; then
+    sudo service haproxy start
+else
+    sudo service haproxy restart
+fi
