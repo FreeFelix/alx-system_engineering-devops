@@ -1,36 +1,23 @@
 #!/usr/bin/python3
-
-""" 
-    A function that queries the Reddit API and prints the titles
-    of the first 10 hot posts listed for a given subreddit.
-
-    Requirements:
-
-    Prototype: def top_ten(subreddit)
-    If not a valid subreddit, print None.
-    NOTE: Invalid subreddits may return a redirect to search results.
-    Ensure that you are not following redirects.
-
+"""queries the Reddit API and prints the titles of the first 10 hot posts
+listed for a given subreddit.
 """
-
 import requests
 
 
 def top_ten(subreddit):
-    """
-    Function that queries the Reddit API
-    - If not a valid subreddit, print None.
-    """
-    req = requests.get(
-        "https://www.reddit.com/r/{}/hot.json".format(subreddit),
-        headers={"User-Agent": "Custom"},
-        params={"limit": 10},
-    )
-
-    if req.status_code == 200:
-        for get_data in req.json().get("data").get("children"):
-            dat = get_data.get("data")
-            title = dat.get("title")
-            print(title)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_2) Apple' +
+        'WebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+    }
+    r = requests.get('https://www.reddit.com/r/{:}/hot.json?limit=10'.format(
+        subreddit), headers=headers, allow_redirects=False)
+    if r.status_code < 300:
+        json = r.json()
+        data_dict = json.get('data')
+        hot_list = data_dict.get('children')
+        for post in hot_list:
+            sub_data_dict = post.get('data')
+            print(sub_data_dict.get('title'))
     else:
         print(None)
